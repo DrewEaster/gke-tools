@@ -65,7 +65,11 @@ def image_tag_from_docker_build_definition(docker_build_definition, version, pro
 
 def build_docker_image(docker_build_definition, version, project):
     image_tag = image_tag_from_docker_build_definition(docker_build_definition, version, project)
-    result = subprocess.call(['docker', 'build', '-f', docker_build_definition['dockerfile'], '-t', image_tag, docker_build_definition['context']])
+    command = ['docker', 'build', '-f', docker_build_definition['dockerfile'], '-t', image_tag]
+    if docker_build_definition.get('add_gcs_creds') == 'true':
+        command.extend(['-v', '/keys:/tmp/keys', '-e', 'GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/service-account-credentials.json' ])
+    command.append(docker_build_definition['context'])
+    result = subprocess.call(command)
     if result != 0:
         sys.exit(result)
 
